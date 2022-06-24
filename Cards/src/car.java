@@ -8,14 +8,23 @@ public class car {
     Image cardImage;
     int i = 0;
     boolean b = true;
+    int Runde=0;
     String name;
 
     public car() {
         x = 100;
         y = 70;
         velocity = 10;
-        cardImage = new ImageIcon("Recources/car2.png").getImage();
+        cardImage = new ImageIcon("Recources/car2 normal.png").getImage();
         name = "Car";
+
+    }
+    public car(String name) {
+        x = 100;
+        y = 70;
+        velocity = 10;
+        cardImage = new ImageIcon("Recources/car2 normal.png").getImage();
+        this.name = name;
 
     }
 
@@ -88,17 +97,23 @@ public class car {
                 break;
 
             case 4:
-                cardImage = new ImageIcon("Recources/car2.png").getImage();
+                cardImage = new ImageIcon("Recources/car2 normal.png").getImage();
                 i = 0;
+                Runde++;
                 break;
 
             default:
                 break;
         }
     }
+    public int getRound(){
+        return this.Runde;
+    }
 
     // eine Runde hat 5060 pixel 100 mal in der sekunde wird aktualisiert
     public void setTimeRound(int sekunden) {
+        if (sekunden>0)
         this.setVelocity(770 / sekunden);
+        else this.setVelocity(0);
     }
 }

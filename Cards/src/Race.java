@@ -1,39 +1,31 @@
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Race implements Serializable {
-    private int driverCount;
-    private int rounds;
+import java.io.*;
+
+public class Race implements Serializable{
     private String label;
-    private Fahrer[] Driver;
+    List<Fahrer> Fahrer = new ArrayList<>();
 
-    public Race() {
-    }
 
-    public Race(int driverCount, int rounds, String label) {
-        this.driverCount = driverCount;
-        this.rounds = rounds;
+    public Race(String label) {
+
         this.label = label;
-        for (int i = 0; i < driverCount; i++) {
-            this.Driver[i] = new Fahrer();
-        }
 
     }
 
     public int getDriverCount() {
-        return this.driverCount;
-    }
-
-    public void setDriverCount(int driverCount) {
-        this.driverCount = driverCount;
+        return Fahrer.size();
     }
 
     public int getRounds() {
-        return this.rounds;
+        if (Fahrer.size()>0){
+            return Fahrer.get(0).getRounds();
+        }
+        throw new IllegalArgumentException("In dem Rennen gibt es noch keinen Fahrer");
     }
+    
 
-    public void setRounds(int rounds) {
-        this.rounds = rounds;
-    }
 
     public String getLabel() {
         return this.label;
@@ -43,31 +35,65 @@ public class Race implements Serializable {
         this.label = label;
     }
 
-    public void addDriver(Fahrer Driver, int s) {
-
-        this.Driver[s] = Driver;
-
+    public void addDriver(Fahrer Driver) {
+        Fahrer.add(Driver);
+    }
+    public void remDriver() {
+        Fahrer.remove(Fahrer.size()-1);
+    }
+    public void changeDriver(int i, Fahrer Driver) {
+        Fahrer.set(i, Driver);
     }
 
-    public Fahrer getDriver(Fahrer Driver, int s) {
-
-        return this.Driver[s] = Driver;
+    public Fahrer getDriver(int Nummer) {
+        if(Nummer<=Fahrer.size())
+        return Fahrer.get(Nummer);
+        throw new IllegalArgumentException("Fahrer "+Nummer+" existiert noch garnicht.");
 
     }
 
     @Override
     public String toString() {
         String p = "";
-        for (int j = 0; j < driverCount; j++) {
-            p = p + Driver[j].getName() + ": ";
-            for (int i = 0; i < rounds; i++) {
-                p = p + Driver[i].getTime(i) + " ; ";
+        for (int j = 0; j < this.getDriverCount(); j++) {
+            p = p + this.getDriver(j).getName() + ": ";
+            for (int i = 0; i < this.getDriver(j).getRounds(); i++) {
+                p = p + this.getDriver(j).getTime(i) + " ; ";
             }
             p = p + "\n";
         }
         ;
 
         return p;
+
+    }
+    public void StoreRace(){
+        Race sRace=this;
+        System.out.println("\n Rennen wird nun gespeichert unter "+sRace.label+": \n\n"+sRace.toString());
+        
+
+            try {
+                ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(sRace.label));
+                stream.writeObject(sRace);
+                stream.close();
+            } catch (IOException ioex) {
+                System.err.println("Fehler beim Schreiben des Objekts aufgetreten.");
+                ioex.printStackTrace();
+            }
+    }
+    public void GetRace(String dateiname) {
+        try {
+            ObjectInputStream stream = new ObjectInputStream(new FileInputStream(dateiname));
+            Race bRace =(Race) stream.readObject();
+            this.label=dateiname;
+            this.Fahrer=bRace.Fahrer;
+            stream.close();
+        } catch (ClassNotFoundException cnfex) {
+            System.err.println("Die Klasse des geladenen Objekts konnte nicht gefunden werden.");
+        } catch (IOException ioex) {
+            System.err.println("Das Objekt konnte nicht geladen werden.");
+            ioex.printStackTrace();
+        }
 
     }
 

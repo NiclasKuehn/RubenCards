@@ -1,5 +1,6 @@
+import java.io.Serializable;
 
-public class Fahrer {
+public class Fahrer implements Serializable{
     private String name;
     private int gefahreneRunden;
     private int Zeiten[] = new int[100];
@@ -24,6 +25,9 @@ public class Fahrer {
     public void setTime(int Round, int Time) {
         this.gefahreneRunden++;
         Zeiten[Round] = Time;
+    }
+    public void setLabel(String Label) {
+        this.name = Label;
     }
 
     public int getRounds() {

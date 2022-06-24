@@ -1,21 +1,14 @@
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 public class InfoPanel extends JPanel {
     final int PANEL_WIDTH = 400;
     final int PANEL_HEIGHT = 500;
 
     private JLabel Name, Runde, Zeit;
-    private JButton nextRound, lastRound, morePlayer, lessPlayer, Save, Reset;
+    private JButton nextRound, lastRound, morePlayer, lessPlayer, Save, Load,Reset;
+    private JTextField RaceLabel;
 
     private int maxPlayer = 100;
     private JTextField[] tfName = new JTextField[maxPlayer];
@@ -25,8 +18,8 @@ public class InfoPanel extends JPanel {
     private int playercount = 0;
     private int round = 0;
 
-    private Fahrer[] Driver = new Fahrer[maxPlayer];
-    private Race Rennen;
+    private Race Rennen = new Race("default");
+    private Fahrer zwischenFahrer = new Fahrer();
 
     public InfoPanel() {
         this.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
@@ -65,15 +58,35 @@ public class InfoPanel extends JPanel {
         this.add(lastRound);
 
         Save = new JButton("Save");
-        Save.setBounds(230, 130, 150, 30);
+        Save.setBounds(230, 160, 150, 30);
         this.add(Save);
 
+        Load = new JButton("Load");
+        Load.setBounds(230, 190, 150, 30);
+        this.add(Load);
+
         Reset = new JButton("Reset");
-        Reset.setBounds(230, 160, 150, 30);
+        Reset.setBounds(230, 220, 150, 30);
         this.add(Reset);
 
         // Textfelder
+
+        RaceLabel = new JTextField("Name des Rennens");
+        RaceLabel.setBounds(230, 130 , 150, 30);
+        this.add(RaceLabel);
+
         // addPLayer();
+
+        Reset.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Reset();
+            }
+        });
+        Load.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                GetData();
+            }
+        });
         morePlayer.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 addPLayer();
@@ -103,20 +116,30 @@ public class InfoPanel extends JPanel {
     }
 
     public void addPLayer() {
+        if(Rennen.getDriverCount()>playercount){
+        tfName[playercount] = new JTextField(Rennen.getDriver(playercount).getName());
+        tfRunde[playercount] = new JTextField(Integer.toString(round));
+        tfZeit[playercount] = new JTextField(Integer.toString(Rennen.getDriver(playercount).getTime(round)));
+        }
+        else{
         tfName[playercount] = new JTextField("Fahrer");
+        tfRunde[playercount] = new JTextField(Integer.toString(round));
+        tfZeit[playercount] = new JTextField("0");
+        Rennen.addDriver(new Fahrer("init"));
+        }
+
         tfName[playercount].setBounds(10, 40 + (26 * playercount), 70, 25);
         this.add(tfName[playercount]);
 
-        tfRunde[playercount] = new JTextField(Integer.toString(round));
         tfRunde[playercount].setBounds(90, 40 + (26 * playercount), 30, 25);
         tfRunde[playercount].setEditable(false);
         this.add(tfRunde[playercount]);
 
-        tfZeit[playercount] = new JTextField("0");
         tfZeit[playercount].setBounds(150, 40 + (26 * playercount), 50, 25);
         this.add(tfZeit[playercount]);
 
         playercount++;
+        
 
     }
 
@@ -128,6 +151,7 @@ public class InfoPanel extends JPanel {
             this.remove(tfName[playercount]);
             this.setVisible(false);
             this.setVisible(true);
+            Rennen.remDriver();
         }
 
     }
@@ -138,61 +162,59 @@ public class InfoPanel extends JPanel {
 
         for (int i = 0; i < playercount; i++) {
             tfRunde[i].setText(Integer.toString(round));
-            tfZeit[i].setText("0");
+            if(Rennen.getDriver(i).getRounds()>=round)
+            tfZeit[i].setText(Integer.toString(Rennen.getDriver(i).getTime(round)));
+            else tfZeit[i].setText("0");
             tfName[i].setEditable(false);
         }
     }
 
     public void lastRound() {
+        if(round >0){
         round--;
         saveData();
 
         for (int i = 0; i < playercount; i++) {
             tfRunde[i].setText(Integer.toString(round));
-            tfZeit[i].setText("0");
+            tfZeit[i].setText(Integer.toString(Rennen.getDriver(i).getTime(round)));
             tfName[i].setEditable(false);
-        }
+        }}
     }
 
     public void saveData() {
-
-        Rennen = new Race(playercount + 1, round + 1, "test");
+        System.out.println("daten werden in Race gespeichert: (playercount: "+(playercount+1)+", round:"+(round+1)+")");
         for (int i = 0; i < playercount; i++) {
-            Driver[i] = new Fahrer(tfName[i].getText());
-            Driver[i].setTime(Integer.parseInt(tfRunde[i].getText()), Integer.parseInt(tfZeit[i].getText()));
-            Rennen.addDriver(Driver[i], i);
+            zwischenFahrer= Rennen.getDriver(i);
+            zwischenFahrer.setLabel(tfName[i].getText());
+            zwischenFahrer.setTime(Integer.parseInt(tfRunde[i].getText()), Integer.parseInt(tfZeit[i].getText()));
+            Rennen.changeDriver(i,zwischenFahrer);
+            Rennen.setLabel(RaceLabel.getText());
         }
     }
 
     public void StoreData() {
-        System.out.print(Rennen.toString());
-        try {
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("Daten.txt"));
-            for (int i = 0; i < playercount; i++) {
-                out.writeObject(Rennen);
-            }
-            out.close();
+        saveData();
+        Rennen.StoreRace();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: handle exception
+    }
+    public void Reset(){
+        
+        for (int i = playercount; i > 0; i--) {
+            remPLayer();
         }
-
+        round=0;
     }
 
     public void GetData() {
-        // ObjectInputStream in new
-        try {
-            ObjectInputStream in = new ObjectInputStream(new FileInputStream("Daten.txt"));
-            for (int i = 0; i < playercount; i++) {
-                Rennen = (Race) in.readObject();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: handle exception
+        Reset();
+        Rennen.GetRace(RaceLabel.getText());
+        for (int i = 0; i < Rennen.getDriverCount(); i++) {
+            addPLayer();
         }
-
     }
+    public Race getInfos(){
+        return Rennen;
+    }
+
 
 }
